@@ -1,25 +1,36 @@
-name: Unit tests
-
-on:
-  push:
-    paths:
-      - '**.go'
-  pull_request:
-    branches:
-      - main
-    paths:
-      - '**.go'
+name: Terraform Provider Tests
+on: [push, pull_request]
 jobs:
-  unit_tests:
-    runs-on: ubuntu-latest
+  unit:
+    name: Unit Tests
+    strategy:
+      matrix:
+        go-version: [1.18.x]
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Set up Go
-        uses: actions/setup-go@v2
+    - uses: actions/setup-go@v3
+      with:
+        go-version: ${{ matrix.go-version }}
+    - uses: actions/checkout@v3
+    - run: go test -v ./...
+
+  acceptance:
+    name: Acceptance Tests
+    strategy:
+      matrix:
+        go-version: [1.18.x]
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
         with:
-          go-version: 1.18.0
-      - name: Go mod verify
-        run: go mod verify
-      - name: Run unit tests
-        run: go test -v -cover ./...
+          go-version: ${{ matrix.go-version }}
+      - uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: '1.2.4'
+          terraform_wrapper: false
+      - run: go test -v ./...
+        env:
+          TF_ACC: '1'
