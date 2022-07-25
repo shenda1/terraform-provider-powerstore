@@ -22,4 +22,4 @@ jobs:
       - name: Go mod verify
         run: go mod verify
       - name: Run unit tests
-        run: make test
+        run: go test -v -cover ./...
